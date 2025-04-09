@@ -9,7 +9,10 @@ class Table extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'seats'];
+    protected $fillable = [
+        'name',
+        'seats',
+    ];
 
     public function reservations()
     {

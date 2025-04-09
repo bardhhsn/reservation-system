@@ -22,4 +22,9 @@ class Reservation extends Model
     {
         return $this->belongsTo(Table::class);
     }
+    public function changeRequests()
+{
+    return $this->hasMany(ReservationChangeRequest::class);
+}
+
 }
