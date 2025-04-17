@@ -15,16 +15,21 @@ class Reservation extends Model
         'customer_phone',
         'reservation_time',
         'guest_count',
+        'user_id',
     ];
-    
 
     public function table()
     {
         return $this->belongsTo(Table::class);
     }
-    public function changeRequests()
-{
-    return $this->hasMany(ReservationChangeRequest::class);
-}
 
+    public function changeRequests()
+    {
+        return $this->hasMany(ReservationChangeRequest::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

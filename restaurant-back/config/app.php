@@ -79,6 +79,19 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+          /*
+     * External Libraries
+     */
+    Maatwebsite\Excel\ExcelServiceProvider::class,
+    MongoDB\Laravel\MongoDBServiceProvider::class,
+
+
+
+
+
+
+
+
     ],
 
 ];

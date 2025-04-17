@@ -52,10 +52,12 @@ class AuthController extends Controller
     }
 
     public function logout(Request $request)
-    {
-        $request->user()->tokens()->delete();
-        return response()->json(['message' => 'U shkyç me sukses']);
-    }
+{
+    $request->user()->currentAccessToken()->delete();
+
+    return response()->json(['message' => 'Dole me sukses']);
+}
+
 
     public function me(Request $request)
     {
