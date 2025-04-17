@@ -1,10 +1,16 @@
 <template>
-  <div class="max-w-4xl mx-auto mt-10">
-    <h2 class="text-xl font-bold mb-4">Rezervimet e mia</h2>
+  <div class="max-w-5xl mx-auto mt-10 px-4">
+    <h2 class="text-3xl font-bold mb-6 text-center text-indigo-700">Rezervimet e Mia</h2>
 
-    <div v-if="reservations.length === 0" class="text-gray-600">Nuk ka rezervime.</div>
+    <div v-if="reservations.length === 0" class="text-center text-gray-500">
+      Nuk ka rezervime aktive.
+    </div>
 
-    <div v-for="reservation in reservations" :key="reservation.id" class="p-4 bg-white rounded shadow mb-4">
+    <div
+      v-for="reservation in reservations"
+      :key="reservation.id"
+      class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200"
+    >
       <p><strong>Klienti:</strong> {{ reservation.customer_name }}</p>
       <p><strong>Telefoni:</strong> {{ reservation.customer_phone }}</p>
       <p><strong>Tavolina:</strong> {{ reservation.table?.name }}</p>
@@ -12,25 +18,27 @@
       <p><strong>Persona:</strong> {{ reservation.guest_count }}</p>
 
       <div v-if="editingId === reservation.id" class="mt-4 space-y-2">
-        <input v-model="editData.customer_name" type="text" class="w-full border p-2 rounded" placeholder="Emri" />
-        <input v-model="editData.customer_phone" type="text" class="w-full border p-2 rounded" placeholder="Telefoni" />
-        <input v-model="editData.reservation_time" type="datetime-local" class="w-full border p-2 rounded" />
-        <input v-model="editData.guest_count" type="number" class="w-full border p-2 rounded" min="1" placeholder="Persona" />
+        <input v-model="editData.customer_name" type="text" class="w-full border px-3 py-2 rounded" />
+        <input v-model="editData.customer_phone" type="text" class="w-full border px-3 py-2 rounded" />
+        <input v-model="editData.reservation_time" type="datetime-local" class="w-full border px-3 py-2 rounded" />
+        <input v-model="editData.guest_count" type="number" min="1" class="w-full border px-3 py-2 rounded" />
 
-        <button @click="submitEditRequest(reservation.id)" class="bg-green-600 text-white px-4 py-1 rounded">Dërgo Ndryshim</button>
-        <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-1 rounded">Anulo</button>
+        <div class="flex space-x-2 mt-3">
+          <button @click="submitEditRequest(reservation.id)" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Dërgo Ndryshim</button>
+          <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-1 rounded hover:bg-gray-600">Anulo</button>
+        </div>
       </div>
 
-      <div v-else class="mt-3 space-x-2">
-        <button @click="startEdit(reservation)" class="bg-blue-600 text-white px-3 py-1 rounded">Kërko Ndryshim</button>
-        <button @click="requestDelete(reservation.id)" class="bg-red-600 text-white px-3 py-1 rounded">Kërko Fshirje</button>
+      <div v-else class="mt-4 flex space-x-3">
+        <button @click="startEdit(reservation)" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Kërko Ndryshim</button>
+        <button @click="requestDelete(reservation.id)" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Kërko Fshirje</button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
+import api from '@/axios' // instanca me baseURL
 import { useToast } from 'vue-toastification'
 
 export default {
@@ -54,9 +62,9 @@ export default {
   },
   methods: {
     fetchReservations() {
-      axios.get(`${process.env.VUE_APP_API_URL}/reservations`)
+      api.get('/reservations')
         .then(res => this.reservations = res.data)
-        .catch(() => this.toast.error("Nuk u mund të ngarkohen rezervimet"))
+        .catch(() => this.toast.error("Gabim gjatë ngarkimit të rezervimeve"))
     },
     startEdit(reservation) {
       this.editingId = reservation.id
@@ -72,7 +80,7 @@ export default {
       this.editData = {}
     },
     submitEditRequest(reservationId) {
-      axios.post(`${process.env.VUE_APP_API_URL}/change-requests`, {
+      api.post('/change-requests', {
         reservation_id: reservationId,
         type: 'edit',
         new_data: this.editData
@@ -84,7 +92,7 @@ export default {
         .catch(() => this.toast.error("Gabim gjatë dërgimit të kërkesës"))
     },
     requestDelete(reservationId) {
-      axios.post(`${process.env.VUE_APP_API_URL}/change-requests`, {
+      api.post('/change-requests', {
         reservation_id: reservationId,
         type: 'delete'
       })

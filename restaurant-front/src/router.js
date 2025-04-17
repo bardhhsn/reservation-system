@@ -4,6 +4,7 @@ import Register from './views/Register.vue'
 import CreateReservation from './views/CreateReservation.vue'
 import ReservationList from './views/ReservationList.vue'
 import AdminDashboard from './views/AdminDashboard.vue'
+import MyRequests from './views/MyRequests.vue'
 
 const routes = [
   { path: '/', redirect: '/create' },
@@ -11,15 +12,16 @@ const routes = [
   { path: '/register', component: Register },
   { path: '/create', component: CreateReservation },
   { path: '/list', component: ReservationList },
-  { path: '/admin', component: AdminDashboard }
+  { path: '/admin', component: AdminDashboard },
+  { path: '/my-requests', component: MyRequests }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes // 👈 këtu përdoret routes
 })
 
-// Middleware për mbrojtje të ruterave
+// mbrojtje e rrugëve
 router.beforeEach((to, from, next) => {
   const publicPages = ['/login', '/register']
   const authRequired = !publicPages.includes(to.path)
@@ -29,7 +31,6 @@ router.beforeEach((to, from, next) => {
     return next('/login')
   }
 
-  // Lejo vetëm admin në /admin
   if (to.path === '/admin') {
     const user = JSON.parse(localStorage.getItem('user'))
     if (!user || user.role !== 'admin') {

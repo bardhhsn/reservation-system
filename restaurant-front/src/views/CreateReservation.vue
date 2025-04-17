@@ -69,7 +69,7 @@ export default {
   },
   methods: {
     fetchTables() {
-      axios.get(`${process.env.VUE_APP_API_URL}/tables`)
+      axios.get('/tables')
         .then(res => {
           this.tables = res.data
         })
@@ -81,7 +81,7 @@ export default {
       this.error = ''
       this.success = ''
 
-      axios.post(`${process.env.VUE_APP_API_URL}/reservations`, this.form)
+      axios.post('/reservations', this.form)
         .then(() => {
           this.success = "Rezervimi u krijua me sukses!"
           this.form = {

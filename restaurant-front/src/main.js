@@ -6,9 +6,11 @@ import 'vue-toastification/dist/index.css'
 import axios from 'axios'
 import './assets/tailwind.css'
 
+// ✅ Vendos bazën për API me /api
+axios.defaults.baseURL = 'http://localhost:8000/api'
+axios.defaults.withCredentials = true
 
-
-// Vendos token automatikisht në header nëse ekziston
+// ✅ Vendos token automatikisht në header nëse ekziston
 const token = localStorage.getItem('token')
 if (token) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`

@@ -1,88 +1,103 @@
 <template>
-  <div class="max-w-md mx-auto mt-10 p-4 bg-white rounded shadow">
-    <h2 class="text-xl font-bold mb-4">Krijo Rezervim</h2>
-    <form @submit.prevent="submitReservation">
-      <div class="mb-4">
-        <label class="block mb-1">Emri i klientit</label>
-        <input v-model="form.customer_name" type="text" class="w-full border p-2 rounded" required />
+  <div class="max-w-5xl mx-auto mt-10 px-4">
+    <h2 class="text-3xl font-bold mb-6 text-center text-indigo-700">Rezervimet e Mia</h2>
+
+    <div v-if="reservations.length === 0" class="text-center text-gray-500">
+      Nuk ka rezervime aktive.
+    </div>
+
+    <div
+      v-for="reservation in reservations"
+      :key="reservation.id"
+      class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200"
+    >
+      <p><strong>Klienti:</strong> {{ reservation.customer_name }}</p>
+      <p><strong>Telefoni:</strong> {{ reservation.customer_phone }}</p>
+      <p><strong>Tavolina:</strong> {{ reservation.table?.name }}</p>
+      <p><strong>Koha:</strong> {{ reservation.reservation_time }}</p>
+      <p><strong>Persona:</strong> {{ reservation.guest_count }}</p>
+
+      <div v-if="editingId === reservation.id" class="mt-4 space-y-2">
+        <input v-model="editData.customer_name" type="text" class="w-full border px-3 py-2 rounded" />
+        <input v-model="editData.customer_phone" type="text" class="w-full border px-3 py-2 rounded" />
+        <input v-model="editData.reservation_time" type="datetime-local" class="w-full border px-3 py-2 rounded" />
+        <input v-model="editData.guest_count" type="number" min="1" class="w-full border px-3 py-2 rounded" />
+
+        <div class="flex space-x-2 mt-3">
+          <button @click="submitEditRequest(reservation.id)" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Dërgo Ndryshim</button>
+          <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-1 rounded hover:bg-gray-600">Anulo</button>
+        </div>
       </div>
 
-      <div class="mb-4">
-        <label class="block mb-1">Telefoni</label>
-        <input v-model="form.customer_phone" type="text" class="w-full border p-2 rounded" required />
+      <div v-else class="mt-4 flex space-x-3">
+        <button @click="startEdit(reservation)" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Kërko Ndryshim</button>
+        <button @click="requestDelete(reservation.id)" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Kërko Fshirje</button>
       </div>
-
-      <div class="mb-4">
-        <label class="block mb-1">Tavolina</label>
-        <select v-model="form.table_id" class="w-full border p-2 rounded" required>
-          <option disabled value="">Zgjidh tavolinën</option>
-          <option v-for="table in tables" :key="table.id" :value="table.id">
-            {{ table.name }} ({{ table.seats }} vende)
-          </option>
-        </select>
-      </div>
-
-      <div class="mb-4">
-        <label class="block mb-1">Koha e rezervimit</label>
-        <input v-model="form.reservation_time" type="datetime-local" class="w-full border p-2 rounded" required />
-      </div>
-
-      <div class="mb-4">
-        <label class="block mb-1">Numri i personave</label>
-        <input v-model="form.guest_count" type="number" class="w-full border p-2 rounded" min="1" required />
-      </div>
-
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        Rezervo
-      </button>
-    </form>
-
-    <p v-if="message" class="mt-4 text-red-600">{{ message }}</p>
+    </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
+import api from '@/axios' // instanca me baseURL
+import { useToast } from 'vue-toastification'
 
 export default {
+  name: "ReservationList",
   data() {
     return {
-      tables: [],
-      form: {
+      reservations: [],
+      editingId: null,
+      editData: {
         customer_name: '',
         customer_phone: '',
-        table_id: '',
         reservation_time: '',
         guest_count: 1
       },
-      message: ''
+      toast: null
     }
   },
   mounted() {
-    axios.get(`${process.env.VUE_APP_API_URL}/tables`)
-      .then(res => this.tables = res.data)
-      .catch(err => this.message = "Nuk u mund të merret lista e tavolinave");
+    this.toast = useToast()
+    this.fetchReservations()
   },
   methods: {
-    submitReservation() {
-      axios.post(`${process.env.VUE_APP_API_URL}/reservations`, this.form)
+    fetchReservations() {
+      api.get('/reservations')
+        .then(res => this.reservations = res.data)
+        .catch(() => this.toast.error("Gabim gjatë ngarkimit të rezervimeve"))
+    },
+    startEdit(reservation) {
+      this.editingId = reservation.id
+      this.editData = {
+        customer_name: reservation.customer_name,
+        customer_phone: reservation.customer_phone,
+        reservation_time: reservation.reservation_time,
+        guest_count: reservation.guest_count
+      }
+    },
+    cancelEdit() {
+      this.editingId = null
+      this.editData = {}
+    },
+    submitEditRequest(reservationId) {
+      api.post('/change-requests', {
+        reservation_id: reservationId,
+        type: 'edit',
+        new_data: JSON.stringify(this.editData) // ✅ ndryshimi i bërë këtu
+      })
         .then(() => {
-          this.message = "Rezervimi u shtua me sukses!";
-          this.form = {
-            customer_name: '',
-            customer_phone: '',
-            table_id: '',
-            reservation_time: '',
-            guest_count: 1
-          }
+          this.editingId = null
+          this.toast.success("Kërkesa për ndryshim u dërgua me sukses!")
         })
-        .catch(error => {
-          if (error.response && error.response.data.message) {
-            this.message = error.response.data.message
-          } else {
-            this.message = "Gabim gjatë krijimit të rezervimit"
-          }
-        });
+        .catch(() => this.toast.error("Gabim gjatë dërgimit të kërkesës"))
+    },
+    requestDelete(reservationId) {
+      api.post('/change-requests', {
+        reservation_id: reservationId,
+        type: 'delete'
+      })
+        .then(() => this.toast.success("Kërkesa për fshirje u dërgua!"))
+        .catch(() => this.toast.error("Gabim gjatë dërgimit të kërkesës për fshirje"))
     }
   }
 }

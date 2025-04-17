@@ -3,10 +3,11 @@
     <!-- Navbar -->
     <nav class="bg-white shadow p-4 flex justify-between items-center">
       <div class="space-x-4">
-        <router-link to="/create" class="text-gray-700 hover:text-blue-600 font-medium">Rezervo</router-link>
-        <router-link to="/list" class="text-gray-700 hover:text-blue-600 font-medium">Rezervimet</router-link>
-        <router-link v-if="isAdmin" to="/admin" class="text-gray-700 hover:text-blue-600 font-medium">Admin</router-link>
-      </div>
+  <router-link to="/create" class="text-gray-700 hover:text-blue-600 font-medium">Rezervo</router-link>
+  <router-link to="/list" class="text-gray-700 hover:text-blue-600 font-medium">Rezervimet</router-link>
+  <router-link to="/my-requests" class="text-gray-700 hover:text-blue-600 font-medium">Kërkesat e mia</router-link>
+  <router-link v-if="isAdmin" to="/admin" class="text-gray-700 hover:text-blue-600 font-medium">Admin</router-link>
+</div>
 
       <div class="space-x-4">
         <router-link v-if="!isLoggedIn" to="/login" class="text-blue-600 font-semibold">Kyçu</router-link>
