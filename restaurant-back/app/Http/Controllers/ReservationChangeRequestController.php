@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ReservationChangeRequest;
 use App\Models\Reservation;
-use App\Services\MongoLogger;
+// use App\Services\MongoLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use OpenApi\Annotations as OA;
@@ -17,12 +17,12 @@ use OpenApi\Annotations as OA;
  */
 class ReservationChangeRequestController extends Controller
 {
-    protected $logger;
+    // protected $logger;
 
-    public function __construct(MongoLogger $logger)
-    {
-        $this->logger = $logger;
-    }
+    // public function __construct(MongoLogger $logger)
+    // {
+    //     $this->logger = $logger;
+    // }
 
     /**
      * @OA\Get(
@@ -106,7 +106,7 @@ class ReservationChangeRequestController extends Controller
 
         $changeRequest = ReservationChangeRequest::create($validated);
 
-        $this->logger->log('Create Change Request', Auth::id(), $validated);
+        // $this->logger->log('Create Change Request', Auth::id(), $validated);
 
         return response()->json($changeRequest, 201);
     }
@@ -166,7 +166,7 @@ class ReservationChangeRequestController extends Controller
             $request->approved_by = Auth::user()->name;
             $request->save();
 
-            $this->logger->log('Approved Change Request', Auth::id(), ['request_id' => $id]);
+            // $this->logger->log('Approved Change Request', Auth::id(), ['request_id' => $id]);
 
             return response()->json(['message' => 'Kërkesa u aprovua.']);
         } catch (\Throwable $e) {
@@ -205,7 +205,7 @@ class ReservationChangeRequestController extends Controller
             $request->approved_by = Auth::user()->name;
             $request->save();
 
-            $this->logger->log('Rejected Change Request', Auth::id(), ['request_id' => $id]);
+            // $this->logger->log('Rejected Change Request', Auth::id(), ['request_id' => $id]);
 
             return response()->json(['message' => 'Kërkesa u refuzua.']);
         } catch (\Throwable $e) {
@@ -240,7 +240,7 @@ class ReservationChangeRequestController extends Controller
 
         $request->delete();
 
-        $this->logger->log('Deleted Change Request', Auth::id(), ['request_id' => $id]);
+        // $this->logger->log('Deleted Change Request', Auth::id(), ['request_id' => $id]);
 
         return response()->json(['message' => 'Kërkesa u fshi me sukses']);
     }

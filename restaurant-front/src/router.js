@@ -5,6 +5,7 @@ import CreateReservation from './views/CreateReservation.vue'
 import ReservationList from './views/ReservationList.vue'
 import AdminDashboard from './views/AdminDashboard.vue'
 import MyRequests from './views/MyRequests.vue'
+import AdminStatistics from './views/AdminStatistics.vue' // ✅ import statistikat
 
 const routes = [
   { path: '/', redirect: '/create' },
@@ -13,12 +14,13 @@ const routes = [
   { path: '/create', component: CreateReservation },
   { path: '/list', component: ReservationList },
   { path: '/admin', component: AdminDashboard },
-  { path: '/my-requests', component: MyRequests }
+  { path: '/my-requests', component: MyRequests },
+  { path: '/admin/statistics', component: AdminStatistics } // ✅ shto statistikat këtu
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes // 👈 këtu përdoret routes
+  routes
 })
 
 // mbrojtje e rrugëve
@@ -31,7 +33,7 @@ router.beforeEach((to, from, next) => {
     return next('/login')
   }
 
-  if (to.path === '/admin') {
+  if (to.path.startsWith('/admin')) {
     const user = JSON.parse(localStorage.getItem('user'))
     if (!user || user.role !== 'admin') {
       return next('/create')

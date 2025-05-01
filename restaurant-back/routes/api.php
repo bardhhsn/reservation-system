@@ -17,6 +17,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\ReservationChangeRequestController;
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\AdminController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -34,6 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-requests/{id}/approve', [ReservationChangeRequestController::class, 'approve']);
     Route::post('/change-requests/{id}/reject', [ReservationChangeRequestController::class, 'reject']);
     Route::delete('/change-requests/{id}', [ReservationChangeRequestController::class, 'destroy']);
+
+    Route::get('/admin/statistics', [AdminController::class, 'statistics']);
 });
 
 Route::post('/logout', [AuthController::class, 'logout']);
@@ -41,3 +45,4 @@ Route::post('/logout', [AuthController::class, 'logout']);
 Route::get('/api/documentation', function () {
     return view('l5-swagger::index');
 });
+Route::middleware('auth:sanctum')->get('/admin/statistics', [AdminController::class, 'statistics']);

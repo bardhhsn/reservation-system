@@ -10,16 +10,16 @@ class MongoLogger
 
     public function __construct()
     {
-        $client = new Client(env('MONGO_URI', 'mongodb://127.0.0.1:27017'));
-        $this->collection = $client->{env('DB_MONGO_DATABASE', 'logs')}->activity_logs;
+        $client = new Client('mongodb://127.0.0.1:27017');
+        $this->collection = $client->selectCollection('your_db', 'logs');
     }
 
-    public function log($action, $userId = null, $details = [])
+    public function log($action, $userId, $data = [])
     {
         $this->collection->insertOne([
             'action' => $action,
             'user_id' => $userId,
-            'details' => $details,
+            'data' => $data,
             'created_at' => now(),
         ]);
     }
