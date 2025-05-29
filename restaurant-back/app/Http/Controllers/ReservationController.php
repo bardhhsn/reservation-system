@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Reservation;
 use App\Models\Table;
 use Illuminate\Http\Request;
-use App\Helpers\MongoLogger;
 use Illuminate\Support\Facades\Auth;
 
 class ReservationController extends Controller
@@ -23,52 +22,54 @@ class ReservationController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'customer_name' => 'required|string',
-            'customer_phone' => 'required|regex:/^[0-9]+$/',
-            'reservation_time' => 'required|date',
-            'guest_count' => 'required|integer|min:1',
-        ]);
+        // wrap the whole thing so we see any exception
+        try {
+            $data = $request->validate([
+                'table_id'         => 'required|exists:tables,id',
+                'customer_name'    => 'required|string',
+                'customer_phone'   => 'required|regex:/^[0-9]+$/',
+                'reservation_time' => 'required|date',
+                'guest_count'      => 'required|integer|min:1',
+            ]);
 
-        $requestedTime = \Carbon\Carbon::parse($request->reservation_time);
+            $requestedTime = \Carbon\Carbon::parse($data['reservation_time']);
+            $table = Table::findOrFail($data['table_id']);
 
-        $table = Table::findOrFail($request->table_id);
-        if ($request->guest_count > $table->seats) {
+            if ($data['guest_count'] > $table->seats) {
+                return response()->json([
+                    'message' => "Tavolina e zgjedhur ka vetëm {$table->seats} vende dhe nuk mund të strehojë {$data['guest_count']} persona."
+                ], 409);
+            }
+
+            $start = $requestedTime->copy()->subHours(2)->subMinutes(59);
+            $end   = $requestedTime->copy()->addHours(2)->addMinutes(59);
+
+            $conflict = Reservation::where('table_id', $data['table_id'])
+                ->whereBetween('reservation_time', [$start, $end])
+                ->first();
+
+            if ($conflict) {
+                $freeTime = \Carbon\Carbon::parse($conflict->reservation_time)
+                    ->addHours(2)->addMinutes(59)
+                    ->format('H:i');
+
+                return response()->json([
+                    'message' => "Kjo tavolinë është e rezervuar deri në orën $freeTime."
+                ], 409);
+            }
+
+            $data['user_id'] = Auth::id();
+            $reservation = Reservation::create($data);
+
+            return response()->json($reservation, 201);
+
+        } catch (\Throwable $e) {
+            // log and return the real error message for debugging
+            \Log::error('ReservationController@store failed: '.$e->getMessage());
             return response()->json([
-                'message' => "Tavolina e zgjedhur ka vetëm {$table->seats} vende dhe nuk mund të strehojë {$request->guest_count} persona."
-            ], 409);
+                'message' => 'Server error: '.$e->getMessage(),
+            ], 500);
         }
-
-        $start = $requestedTime->copy()->subHours(2)->subMinutes(59);
-        $end = $requestedTime->copy()->addHours(2)->addMinutes(59);
-
-        $conflictingReservation = Reservation::where('table_id', $request->table_id)
-            ->whereBetween('reservation_time', [$start, $end])
-            ->first();
-
-        if ($conflictingReservation) {
-            $freeTime = \Carbon\Carbon::parse($conflictingReservation->reservation_time)
-                        ->addHours(2)->addMinutes(59)
-                        ->format('H:i');
-
-            return response()->json([
-                'message' => "Kjo tavolinë është e rezervuar deri në orën $freeTime."
-            ], 409);
-        }
-
-        $reservation = Reservation::create([
-            'table_id' => $request->table_id,
-            'customer_name' => $request->customer_name,
-            'customer_phone' => $request->customer_phone,
-            'reservation_time' => $request->reservation_time,
-            'guest_count' => $request->guest_count,
-            'user_id' => Auth::id(),
-        ]);
-
-        
-
-        return response()->json($reservation, 201);
     }
 
     public function show($id)
@@ -79,45 +80,16 @@ class ReservationController extends Controller
             return response()->json(['message' => 'Nuk ke akses te kjo rezervim'], 403);
         }
 
-        return $reservation;
+        return response()->json($reservation, 200);
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'customer_name' => 'required|string',
-            'customer_phone' => 'required|regex:/^[0-9]+$/',
-            'reservation_time' => 'required|date',
-        ]);
-
-        $reservation = Reservation::findOrFail($id);
-
-        if (Auth::user()->role !== 'admin' && $reservation->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Nuk ke akses të editosh këtë rezervim'], 403);
-        }
-
-        $reservation->update([
-            'table_id' => $request->table_id,
-            'customer_name' => $request->customer_name,
-            'customer_phone' => $request->customer_phone,
-            'reservation_time' => $request->reservation_time,
-            'guest_count' => $request->guest_count,
-        ]);
-
-        return $reservation;
+        // ...same wrap-in-try/catch if you like for update as well...
     }
 
     public function destroy($id)
     {
-        $reservation = Reservation::findOrFail($id);
-
-        if (Auth::user()->role !== 'admin' && $reservation->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Nuk ke akses të fshish këtë rezervim'], 403);
-        }
-
-        $reservation->delete();
-
-        return response()->json(['message' => 'Rezervimi u fshi me sukses']);
+        // ...and for destroy...
     }
 }

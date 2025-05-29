@@ -1,3 +1,5 @@
+<!-- src/views/ReservationList.vue -->
+
 <template>
   <div class="max-w-5xl mx-auto mt-10 px-4">
     <h2 class="text-3xl font-bold mb-6 text-center text-indigo-700">Rezervimet e Mia</h2>
@@ -21,28 +23,48 @@
         <input v-model="editData.customer_name" type="text" class="w-full border px-3 py-2 rounded" />
         <input v-model="editData.customer_phone" type="text" class="w-full border px-3 py-2 rounded" />
         <input v-model="editData.reservation_time" type="datetime-local" class="w-full border px-3 py-2 rounded" />
-        <input v-model="editData.guest_count" type="number" min="1" class="w-full border px-3 py-2 rounded" />
+        <input v-model.number="editData.guest_count" type="number" min="1" class="w-full border px-3 py-2 rounded" />
 
         <div class="flex space-x-2 mt-3">
-          <button @click="submitEditRequest(reservation.id)" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Dërgo Ndryshim</button>
-          <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-1 rounded hover:bg-gray-600">Anulo</button>
+          <button
+            @click="submitEditRequest(reservation.id)"
+            class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
+          >
+            Dërgo Ndryshim
+          </button>
+          <button
+            @click="cancelEdit"
+            class="bg-gray-500 text-white px-4 py-1 rounded hover:bg-gray-600"
+          >
+            Anulo
+          </button>
         </div>
       </div>
 
       <div v-else class="mt-4 flex space-x-3">
-        <button @click="startEdit(reservation)" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Kërko Ndryshim</button>
-        <button @click="requestDelete(reservation.id)" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Kërko Fshirje</button>
+        <button
+          @click="startEdit(reservation)"
+          class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+        >
+          Kërko Ndryshim
+        </button>
+        <button
+          @click="requestDelete(reservation.id)"
+          class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+        >
+          Kërko Fshirje
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import api from '@/axios' // instanca me baseURL
+import api from '@/axios'
 import { useToast } from 'vue-toastification'
 
 export default {
-  name: "ReservationList",
+  name: 'ReservationList',
   data() {
     return {
       reservations: [],
@@ -53,52 +75,62 @@ export default {
         reservation_time: '',
         guest_count: 1
       },
-      toast: null
+      toast: useToast()
     }
   },
   mounted() {
-    this.toast = useToast()
     this.fetchReservations()
   },
   methods: {
-    fetchReservations() {
-      api.get('/reservations')
-        .then(res => this.reservations = res.data)
-        .catch(() => this.toast.error("Gabim gjatë ngarkimit të rezervimeve"))
+    async fetchReservations() {
+      try {
+        const res = await api.get('/reservations')
+        this.reservations = res.data
+      } catch {
+        this.toast.error('Gabim gjatë ngarkimit të rezervimeve')
+      }
     },
     startEdit(reservation) {
       this.editingId = reservation.id
-      this.editData = {
-        customer_name: reservation.customer_name,
-        customer_phone: reservation.customer_phone,
-        reservation_time: reservation.reservation_time,
-        guest_count: reservation.guest_count
-      }
+      this.editData = { ...reservation }
     },
     cancelEdit() {
       this.editingId = null
-      this.editData = {}
+      this.editData = {
+        customer_name: '',
+        customer_phone: '',
+        reservation_time: '',
+        guest_count: 1
+      }
     },
-    submitEditRequest(reservationId) {
-      api.post('/change-requests', {
-        reservation_id: reservationId,
-        type: 'edit',
-        new_data: this.editData
-      })
-        .then(() => {
-          this.editingId = null
-          this.toast.success("Kërkesa për ndryshim u dërgua me sukses!")
+    async submitEditRequest(reservationId) {
+      try {
+        await api.post('/change-requests', {
+          reservation_id: reservationId,
+          type: 'edit',
+          new_data: this.editData
         })
-        .catch(() => this.toast.error("Gabim gjatë dërgimit të kërkesës"))
+        this.toast.success('Kërkesa për ndryshim u dërgua me sukses!')
+        this.editingId = null
+      } catch {
+        this.toast.error('Gabim gjatë dërgimit të kërkesës')
+      }
     },
-    requestDelete(reservationId) {
-      api.post('/change-requests', {
-        reservation_id: reservationId,
-        type: 'delete'
-      })
-        .then(() => this.toast.success("Kërkesa për fshirje u dërgua!"))
-        .catch(() => this.toast.error("Gabim gjatë dërgimit të kërkesës për fshirje"))
+    async requestDelete(reservationId) {
+      try {
+        await api.post('/change-requests', {
+          reservation_id: reservationId,
+          type: 'delete'
+        })
+        this.toast.success('Kërkesa për fshirje u dërgua!')
+      } catch {
+        this.toast.error('Gabim gjatë dërgimit të kërkesës për fshirje')
+      }
     }
   }
 }
 </script>
+
+<style scoped>
+/* any additional styles */
+</style>

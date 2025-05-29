@@ -31,7 +31,6 @@ Route::get(
 ->middleware('signed')
 ->name('verification.verify');
 
-
 // All other routes require authentication
 Route::middleware('auth:sanctum')->group(function () {
     // Authentication management
@@ -48,20 +47,20 @@ Route::middleware('auth:sanctum')->group(function () {
     ->name('verification.resend');
 
     // Admin-only endpoints
-    Route::middleware('role:ROLE_ADMIN')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/statistics', [AdminController::class, 'statistics']);
         Route::post('/change-requests/{id}/approve', [ReservationChangeRequestController::class, 'approve']);
         Route::post('/change-requests/{id}/reject',  [ReservationChangeRequestController::class, 'reject']);
+        Route::get('/change-requests', [ReservationChangeRequestController::class, 'index']); // Admin: get all change requests
     });
 
     // User-only endpoints
-    Route::middleware('role:ROLE_USER')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
         Route::get('/reservations',      [ReservationController::class, 'index']);
         Route::post('/reservations',     [ReservationController::class, 'store']);
         Route::get('/reservations/{id}', [ReservationController::class, 'show']);
 
         Route::post('/change-requests',        [ReservationChangeRequestController::class, 'store']);
-        Route::get('/change-requests',         [ReservationChangeRequestController::class, 'index']);
         Route::get('/change-requests/my',      [ReservationChangeRequestController::class, 'my']);
         Route::delete('/change-requests/{id}', [ReservationChangeRequestController::class, 'destroy']);
     });

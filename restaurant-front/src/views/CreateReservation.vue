@@ -1,3 +1,5 @@
+<!-- src/views/CreateReservation.vue -->
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100 p-6">
     <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-4xl">
@@ -83,7 +85,7 @@
 
           <button
             type="submit"
-            class="bg-blue-600 text-white px-4 py-2 rounded"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
             Rezervo
           </button>
@@ -94,7 +96,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import api from '@/axios'
 import { useToast } from 'vue-toastification'
 
 export default {
@@ -120,7 +122,7 @@ export default {
     async loadTables() {
       const toast = useToast()
       try {
-        const res = await axios.get('/api/tables')
+        const res = await api.get('/tables')
         this.tables = res.data
       } catch (err) {
         console.error('Failed to load tables:', err)
@@ -141,19 +143,17 @@ export default {
     async submitReservation() {
       const toast = useToast()
       try {
-        await axios.post('/api/reservations', { ...this.form })
+        await api.post('/reservations', this.form)
         toast.success('Rezervim i suksesshëm!')
         this.selectedTable = null
         this.loadTables()
       } catch (err) {
         console.error('Reservation failed:', err)
         let msg = 'Dështoi rezervimi.'
-        if (err.response) {
-          if (err.response.status === 409 && err.response.data?.message) {
-            msg = err.response.data.message
-          } else if (err.response.data?.error) {
-            msg = err.response.data.error
-          }
+        if (err.response?.data?.errors) {
+          msg = Object.values(err.response.data.errors)[0][0]
+        } else if (err.response?.data?.message) {
+          msg = err.response.data.message
         }
         this.error = msg
         toast.error(msg)
