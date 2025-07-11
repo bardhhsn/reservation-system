@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-5xl mx-auto mt-10 px-4">
-    <h2 class="text-3xl font-bold mb-6 text-center text-indigo-700">Kërkesat e Mia</h2>
+    <h2 class="text-3xl font-bold mb-6 text-center text-indigo-700">{{ pageTitle }}</h2>
 
     <div v-if="requests.length === 0" class="text-gray-500 text-center">
       Nuk ke dërguar asnjë kërkesë.
@@ -30,7 +30,10 @@
         </span>
       </p>
       <p><strong>Data:</strong> {{ formatDate(req.created_at) }}</p>
-      <p><strong>Rezervimi:</strong> {{ req.reservation.customer_name }} në {{ req.reservation.reservation_time }}</p>
+      
+      <!-- Handle case where reservation might be null (deleted) -->
+      <p v-if="req.reservation"><strong>Rezervimi:</strong> {{ req.reservation.customer_name }} në {{ req.reservation.reservation_time }}</p>
+      <p v-else class="text-gray-500 italic"><strong>Rezervimi:</strong> (Rezervimi është fshirë)</p>
 
       <p v-if="req.type === 'edit'" class="mt-2"><strong>Të dhënat e reja:</strong>
         <pre class="bg-gray-100 p-2 mt-1 rounded text-sm overflow-auto">{{ req.new_data }}</pre>
@@ -49,7 +52,8 @@
 </template>
 
 <script>
-import api from '@/axios' // importo instancën e axios me baseURL + token automatik
+import api from '@/axios'
+import { useToast } from 'vue-toastification'
 
 export default {
   name: "MyRequests",
@@ -58,25 +62,45 @@ export default {
       requests: []
     }
   },
+  setup() {
+    const toast = useToast()
+    return { toast }
+  },
   mounted() {
     this.fetchRequests()
   },
   methods: {
-    fetchRequests() {
-      api.get('/change-requests/my')
-        .then(res => this.requests = res.data)
-        .catch(() => console.error("Gabim gjatë ngarkimit të kërkesave"))
+    async fetchRequests() {
+      try {
+        const res = await api.get('/change-requests/my')
+        this.requests = res.data
+      } catch (error) {
+        console.error("Gabim gjatë ngarkimit të kërkesave:", error)
+        this.toast.error("Gabim gjatë ngarkimit të kërkesave")
+      }
     },
     formatDate(date) {
       return new Date(date).toLocaleString()
     },
-    cancelRequest(id) {
+    async cancelRequest(id) {
       if (confirm("A je i sigurt që dëshiron të anulosh këtë kërkesë?")) {
-        api.delete(`/change-requests/${id}`)
-          .then(() => this.fetchRequests())
-          .catch(() => alert("Gabim gjatë anulimit"))
+        try {
+          await api.delete(`/change-requests/${id}`)
+          this.toast.success("Kërkesa u anulua me sukses")
+          this.fetchRequests() // Refresh the list
+        } catch (error) {
+          console.error("Gabim gjatë anulimit:", error)
+          this.toast.error("Gabim gjatë anulimit të kërkesës")
+        }
       }
+    }
+  },
+  computed: {
+    pageTitle() {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      return user.role === 'admin' ? 'Kërkesat' : 'Kërkesat e Mia'
     }
   }
 }
 </script>
+
